@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Gold Med Clinic — Onlayn Ofis & Boshqaruv Tizimi</title>
+  <meta name="theme-color" content="#132A2E">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="{% static 'pwa/icon-192.png' %}">
+  <link rel="apple-touch-icon" href="{% static 'pwa/apple-touch-icon.png' %}">
+  <link rel="preload" href="{% static 'vendor/inter-400.woff2' %}" as="font" type="font/woff2" crossorigin>
+
+  <!-- Hamma narsa serverning o'zidan beriladi (CDN va brauzerda kompilyatsiya yo'q): frontend/ papkasida yig'iladi -->
+  <link rel="stylesheet" href="{% static 'dist/app.css' %}">
+  <script src="{% static 'vendor/react.min.js' %}"></script>
+  <script src="{% static 'vendor/react-dom.min.js' %}"></script>
+  <script src="{% static 'vendor/lucide.min.js' %}"></script>
+  <script src="{% static 'vendor/prop-types.min.js' %}"></script>
+  <script src="{% static 'vendor/recharts.min.js' %}"></script>
+</head>
+<body class="bg-[#F5F2EB]">
+
+  <div id="root"></div>
+
+  <!-- Server tomonidan beriladigan boshlang'ich holat (kirgan foydalanuvchi yoki null) -->
+  {{ boot|json_script:"boot-data" }}
+
+  <script src="{% static 'dist/app.js' %}"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", function () { navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(function () {}); });
+    }
+  </script>
+</body>
+</html>

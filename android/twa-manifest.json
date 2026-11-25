@@ -1,0 +1,21 @@
+{
+  "packageId": "uz.clinicsystem.goldmed",
+  "host": "clinic-system.uz",
+  "name": "Gold Med Clinic — Boshqaruv",
+  "launcherName": "Gold Med",
+  "display": "standalone",
+  "orientation": "portrait",
+  "themeColor": "#132A2E",
+  "navigationColor": "#132A2E",
+  "backgroundColor": "#F5F2EB",
+  "enableNotifications": false,
+  "startUrl": "/",
+  "iconUrl": "https://clinic-system.uz/static/pwa/icon-512.png",
+  "maskableIconUrl": "https://clinic-system.uz/static/pwa/icon-maskable-512.png",
+  "webManifestUrl": "https://clinic-system.uz/manifest.webmanifest",
+  "appVersionName": "1.0.0",
+  "appVersion": "1",
+  "fallbackType": "customtabs",
+  "features": { "locationDelegation": { "enabled": true } },
+  "signingKey": { "path": "./goldmed.keystore", "alias": "goldmed" }
+}

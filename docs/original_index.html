@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gold Med Clinic — Onlayn Ofis & Boshqaruv Tizimi</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- React va ReactDOM CDN -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  
+  <!-- Babel (JSX kodni brauzerda o'qitish uchun) -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Lucide Icons (Piktogrammalar uchun) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Recharts Kutubxonasi va uning bog'liqliklari -->
+  <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+  <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-[#F5F2EB]">
+
+  <div id="root"></div>
+
+  <!-- React Komponentlar va Kod qismi -->
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    const {
+      BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, CartesianGrid
+    } = Recharts;
+
+    // Ranglar palitrasi
+    const C = {
+      ink: "#132A2E",        
+      inkSoft: "#1D3B40",    
+      paper: "#F5F2EB",      
+      card: "#FFFFFF",
+      border: "#E6E1D6",
+      text: "#1E2422",
+      muted: "#736C5E",
+      gold: "#BD9A4B",       
+      goldSoft: "#F1E7CE",
+      teal: "#2F6F63",
+      tealSoft: "#E1EEEA",
+      red: "#A6483C",
+      redSoft: "#F3E1DE",
+      amber: "#B8860B",
+      amberSoft: "#F6EAD2",
+    };
+
+    // Navigatsiya menyusi
+    const NAV = [
+      { id: "dashboard", label: "Boshqaruv paneli", icon: "layout-dashboard" },
+      { id: "tasks", label: "Topshiriqlar", icon: "list-checks", badge: true },
+      { id: "discussions", label: "Muhokamalar", icon: "message-square" },
+      { id: "warnings", label: "Ogohlantirish / Jarima", icon: "alert-triangle", badge: 3, badgeColor: C.red },
+      { id: "proposals", label: "Takliflar va e'tirozlar", icon: "lightbulb" },
+      { id: "meetings", label: "Haftalik majlislar", icon: "calendar" },
+      { id: "pricelist", label: "Prayskurant", icon: "banknote" },
+      { id: "doctors", label: "Shifokorlar", icon: "stethoscope" },
+      { id: "bonuses", label: "Bonus", icon: "gift" },
+      { id: "documents", label: "Qoida va hujjatlar", icon: "file-text" },
+    ];
+
+    const statusStyle = {
+      "Yangi": { bg: C.tealSoft, fg: C.teal },
+      "Jarayonda": { bg: C.amberSoft, fg: C.amber },
+      "Bajarildi": { bg: "#E3EFE1", fg: "#3F7D3A" },
+      "Kechikdi": { bg: C.redSoft, fg: C.red },
+    };
+
+    // --- MOCK MA'LUMOTLAR BAZASI ---
+    const weeklyData = [
+      { day: "Dush", yangi: 4, bajarildi: 3 },
+      { day: "Sesh", yangi: 3, bajarildi: 5 },
+      { day: "Chor", yangi: 5, bajarildi: 2 },
+      { day: "Pay", yangi: 2, bajarildi: 4 },
+      { day: "Jum", yangi: 6, bajarildi: 3 },
+      { day: "Shan", yangi: 1, bajarildi: 1 },
+    ];
+
+    const warnings = [
+      { name: "Sardor M.", dept: "Qabulxona", type: "Ogohlantirish", reason: "Ishga kechikish", amount: "0 UZS", date: "12-Iyul" },
+      { name: "Nigora T.", dept: "Xo'jalik", type: "Jarima", reason: "Topshiriq muddatidan o'tib ketgan", amount: "50,000 UZS", date: "10-Iyul" },
+      { name: "Dilshod B.", dept: "Laboratoriya", type: "Jarima", reason: "Xavfsizlik qoidasini buzish", amount: "100,000 UZS", date: "09-Iyul" },
+    ];
+
+    const priceList = [
+      { service: "Terapevt ko'rigi", price: "120,000 UZS", version: "v2.1", updated: "12.07.2026" },
+      { service: "Umumiy qon tahlili", price: "85,000 UZS", version: "v1.8", updated: "10.07.2026" },
+      { service: "UZI tekshiruvi", price: "150,000 UZS", version: "v3.0", updated: "14.07.2026" },
+    ];
+
+    const doctors = [
+      { name: "Dr. Alisher Qobilov", spec: "Kardiolog", exp: "Ish tajribasi: 12 yil" },
+      { name: "Dr. Shaxnoza Umarova", spec: "Pediatr", exp: "Ish tajribasi: 8 yil" },
+      { name: "Dr. Jasur Alimov", spec: "Nevropatolog", exp: "Ish tajribasi: 15 yil" },
+    ];
+
+    // Lucide ikonkasini render qiluvchi yordamchi komponent
+    function Icon({ name, size = 16, color = "currentColor", className = "" }) {
+      useEffect(() => {
+        if (window.lucide) {
+          window.lucide.createIcons();
+        }
+      }, [name]);
+      return <i data-lucide={name} style={{ width: size, height: size, color: color }} className={`inline-block ${className}`}></i>;
+    }
+
+    // Yon menyu (Sidebar)
+    function Sidebar({ active, setActive, activeTasksCount }) {
+      return (
+        <div className="h-full flex flex-col justify-between" style={{ background: C.ink, width: 264 }}>
+          <div>
+            <div className="flex items-center gap-3 px-6" style={{ height: 76, borderBottom: `1px solid ${C.inkSoft}` }}>
+              <div className="flex items-center justify-center rounded-full" style={{ width: 36, height: 36, background: C.gold }}>
+                <span style={{ color: C.ink, fontWeight: 700, fontSize: 16 }}>G</span>
+              </div>
+              <div>
+                <div style={{ color: "#F7F3E8", fontSize: 17, letterSpacing: 0.3, fontWeight: 600 }}>Gold Med</div>
+                <div style={{ color: "#9FB3AE", fontSize: 10, letterSpacing: 1.2, textTransform: "uppercase" }}>Boshqaruv</div>
+              </div>
+            </div>
+
+            <nav className="px-3 py-4 flex flex-col gap-1">
+              {NAV.map((item) => {
+                const isActive = active === item.id;
+                const badgeValue = item.id === "tasks" ? activeTasksCount : item.badge;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => setActive(item.id)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors w-full"
+                    style={{
+                      background: isActive ? C.inkSoft : "transparent",
+                      color: isActive ? "#F7F3E8" : "#B7C4C0",
+                      borderLeft: isActive ? `3px solid ${C.gold}` : "3px solid transparent",
+                    }}
+                  >
+                    <Icon name={item.icon} size={17} />
+                    <span style={{ fontSize: 13.5, fontWeight: isActive ? 600 : 500, flex: 1 }}>
+                      {item.label}
+                    </span>
+                    {badgeValue && (
+                      <span
+                        className="rounded-full flex items-center justify-center"
+                        style={{
+                          background: item.badgeColor || C.gold,
+                          color: C.ink,
+                          fontSize: 10.5,
+                          fontWeight: 700,
+                          minWidth: 18,
+                          height: 18,
+                          padding: "0 5px",
+                        }}
+                      >
+                        {badgeValue}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
+          </div>
+
+          <div className="px-3 pb-4">
+            <button className="flex items-center gap-3 rounded-lg px-3 py-2.5 w-full text-left mb-2" style={{ color: "#B7C4C0" }}>
+              <Icon name="settings" size={17} />
+              <span style={{ fontSize: 13.5, fontWeight: 500 }}>Sozlamalar</span>
+            </button>
+            <div className="flex items-center gap-3 rounded-lg px-3 py-3" style={{ background: C.inkSoft }}>
+              <div className="rounded-full flex items-center justify-center" style={{ width: 32, height: 32, background: C.gold, color: C.ink, fontWeight: 700, fontSize: 13 }}>
+                X
+              </div>
+              <div style={{ lineHeight: 1.2 }}>
+                <div style={{ color: "#F7F3E8", fontSize: 12.5, fontWeight: 600 }}>Xudoyor N.</div>
+                <div style={{ color: "#8FA29D", fontSize: 11 }}>Administrator</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Yuqori panel (TopBar)
+    function TopBar({ title, subtitle }) {
+      return (
+        <div className="flex items-center justify-between px-8" style={{ height: 76, borderBottom: `1px solid ${C.border}`, background: C.card }}>
+          <div>
+            <div style={{ fontSize: 21, color: C.text, fontWeight: 600 }}>{title}</div>
+            {subtitle && <div style={{ fontSize: 12.5, color: C.muted, marginTop: 2 }}>{subtitle}</div>}
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 rounded-full px-3.5 py-2" style={{ background: C.paper, border: `1px solid ${C.border}` }}>
+              <Icon name="search" size={15} color={C.muted} />
+              <input
+                placeholder="Qidirish..."
+                style={{ background: "transparent", border: "none", outline: "none", fontSize: 13, color: C.text, width: 160 }}
+              />
+            </div>
+            <button className="relative rounded-full p-2" style={{ background: C.paper, border: `1px solid ${C.border}` }}>
+              <Icon name="bell" size={16} color={C.text} />
+              <span className="absolute rounded-full" style={{ top: 6, right: 6, width: 7, height: 7, background: C.red }} />
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Statistika kartochkasi
+    function StatCard({ label, value, delta, positive, icon, accent }) {
+      return (
+        <div className="rounded-2xl p-5 flex-1 transition-all hover:shadow-md" style={{ background: C.card, border: `1px solid ${C.border}` }}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="rounded-xl flex items-center justify-center" style={{ width: 38, height: 38, background: accent + "22" }}>
+              <Icon name={icon} size={18} color={accent} />
+            </div>
+            <div className="flex items-center gap-1" style={{ color: positive ? "#3F7D3A" : C.red, fontSize: 12, fontWeight: 600 }}>
+              <Icon name={positive ? "arrow-up-right" : "arrow-down-right"} size={13} />
+              {delta}
+            </div>
+          </div>
+          <div style={{ fontSize: 28, color: C.text, fontWeight: 600 }}>{value}</div>
+          <div style={{ fontSize: 12.5, color: C.muted, marginTop: 2 }}>{label}</div>
+        </div>
+      );
+    }
+
+    function Badge({ text, bg, fg }) {
+      return (
+        <span
+          className="rounded-full px-2.5 py-1 inline-block"
+          style={{ background: bg, color: fg, fontSize: 11.5, fontWeight: 600 }}
+        >
+          {text}
+        </span>
+      );
+    }
+
+    function SectionCard({ title, action, children }) {
+      return (
+        <div className="rounded-2xl mb-6" style={{ background: C.card, border: `1px solid ${C.border}` }}>
+          <div className="flex items-center justify-between px-6 pt-5 pb-4">
+            <div style={{ fontSize: 16.5, color: C.text, fontWeight: 600 }}>{title}</div>
+            {action}
+          </div>
+          {children}
+        </div>
+      );
+    }
+
+    // Modal oyna formasi
+    function TaskModal({ isOpen, onClose, onSave }) {
+      const [title, setTitle] = useState("");
+      const [dept, setDept] = useState("Xo'jalik");
+      const [assignee, setAssignee] = useState("");
+      const [due, setDue] = useState("Bugun");
+
+      if (!isOpen) return null;
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!title.trim() || !assignee.trim()) {
+          alert("Iltimos, barcha maydonlarni to'ldiring!");
+          return;
+        }
+        onSave({ title, dept, assignee, due, status: "Yangi" });
+        setTitle("");
+        setAssignee("");
+        setDept("Xo'jalik");
+        setDue("Bugun");
+        onClose();
+      };
+
+      return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl mx-4" style={{ border: `1px solid ${C.border}` }}>
+            <div className="flex justify-between items-center mb-5 pb-3" style={{ borderBottom: `1px solid ${C.border}` }}>
+              <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+                <Icon name="plus-circle" size={20} color={C.teal} /> Yangi topshiriq biriktirish
+              </h3>
+              <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+                <Icon name="x" size={20} />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4 text-sm">
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Topshiriq mazmuni</label>
+                <input 
+                  type="text" 
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Masalan: Laboratoriyaga probirkalar buyurtma qilish"
+                  className="w-full p-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#2F6F63]/30"
+                  style={{ borderColor: C.border }}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Bo'lim</label>
+                  <select 
+                    value={dept}
+                    onChange={(e) => setDept(e.target.value)}
+                    className="w-full p-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#2F6F63]/30 bg-white"
+                    style={{ borderColor: C.border }}
+                  >
+                    <option value="Xo'jalik">Xo'jalik</option>
+                    <option value="Buxgalteriya">Buxgalteriya</option>
+                    <option value="SMM">SMM</option>
+                    <option value="Boshqaruv">Boshqaruv</option>
+                    <option value="Qabulxona">Qabulxona</option>
+                    <option value="Laboratoriya">Laboratoriya</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Muddat</label>
+                  <select 
+                    value={due}
+                    onChange={(e) => setDue(e.target.value)}
+                    className="w-full p-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#2F6F63]/30 bg-white"
+                    style={{ borderColor: C.border }}
+                  >
+                    <option value="Bugun">Bugun</option>
+                    <option value="Ertaga">Ertaga</option>
+                    <option value="Hafta oxiri">Hafta oxiri</option>
+                    <option value="Dushanba">Dushanba</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Mas'ul xodim</label>
+                <input 
+                  type="text" 
+                  value={assignee}
+                  onChange={(e) => setAssignee(e.target.value)}
+                  placeholder="Xodimning F.I.Sh. (masalan: Nigora T.)"
+                  className="w-full p-3 rounded-lg border focus:outline-none focus:ring-2 focus:ring-[#2F6F63]/30"
+                  style={{ borderColor: C.border }}
+                />
+              </div>
+
+              <div className="flex gap-3 justify-end mt-4 pt-3" style={{ borderTop: `1px solid ${C.border}` }}>
+                <button 
+                  type="button" 
+                  onClick={onClose}
+                  className="px-4 py-2.5 rounded-lg font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200"
+                >
+                  Bekor qilish
+                </button>
+                <button 
+                  type="submit"
+                  className="px-5 py-2.5 rounded-lg font-semibold text-white shadow-md hover:shadow-lg"
+                  style={{ background: C.ink }}
+                >
+                  Tizimga qo'shish
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      );
+    }
+
+    // Asosiy Dashboard ko'rinishi
+    function Dashboard({ tasksList, weeklyChartData, activityLog }) {
+      const activeTasks = tasksList.filter(t => t.status !== "Bajarildi").length;
+      const completedTasks = tasksList.filter(t => t.status === "Bajarildi").length;
+      return (
+        <div className="flex flex-col gap-5">
+          <div className="flex flex-col md:flex-row gap-5">
+            <StatCard label="Faol topshiriqlar" value={activeTasks} delta="+ yangilandi" positive icon="list-checks" accent={C.teal} />
+            <StatCard label="Bajarilgan jami" value={completedTasks} delta="Faol ishlar" positive icon="check" accent="#3F7D3A" />
+            <StatCard label="Ogohlantirish/jarima" value="3" delta="+1 shu hafta" positive={false} icon="alert-triangle" accent={C.red} />
+            <StatCard label="Faol xodimlar" value="14" delta="0 o'zgarish" positive icon="users" accent={C.gold} />
+          </div>
+
+          <div className="flex flex-col lg:flex-row gap-5">
+            <div style={{ flex: 1.4 }}>
+              <SectionCard title="Haftalik topshiriqlar dinamikasi" action={<Badge text="Bu hafta" bg={C.goldSoft} fg={C.gold} />}>
+                <div className="px-4 pb-5" style={{ height: 230 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={weeklyChartData} barGap={4}>
+                      <CartesianGrid vertical={false} stroke={C.border} />
+                      <XAxis dataKey="day" tick={{ fontSize: 11.5, fill: C.muted }} axisLine={false} tickLine={false} />
+                      <YAxis tick={{ fontSize: 11.5, fill: C.muted }} axisLine={false} tickLine={false} />
+                      <Tooltip contentStyle={{ fontSize: 12, borderRadius: 8, border: `1px solid ${C.border}` }} />
+                      <Bar dataKey="yangi" fill={C.goldSoft} radius={[4, 4, 0, 0]} name="Yangi" />
+                      <Bar dataKey="bajarildi" fill={C.teal} radius={[4, 4, 0, 0]} name="Bajarildi" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </SectionCard>
+            </div>
+
+            <div style={{ flex: 1 }}>
+              <SectionCard title="So'nggi faoliyat jurnali">
+                <div className="px-6 pb-5 flex flex-col gap-4 max-h-[230px] overflow-y-auto">
+                  {activityLog.map((a, i) => (
+                    <div key={i} className="flex items-start gap-3">
+                      <div className="rounded-full flex-shrink-0 w-2 h-2 mt-1.5" style={{ background: C.gold }} />
+                      <div style={{ fontSize: 12.8, color: C.text, lineHeight: 1.5 }}>
+                        <span style={{ fontWeight: 600 }}>{a.who}</span> {a.what}
+                        <div style={{ color: C.muted, fontSize: 11.5, marginTop: 1 }}>{a.when}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </SectionCard>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // Topshiriqlar ro'yxati oynasi
+    function TasksView({ tasksList, onOpenModal, onToggleStatus }) {
+      const [filter, setFilter] = useState("Barchasi");
+      const filters = ["Barchasi", "Yangi", "Jarayonda", "Bajarildi", "Kechikdi"];
+      const filtered = filter === "Barchasi" ? tasksList : tasksList.filter(t => t.status === filter);
+      return (
+        <SectionCard
+          title="Topshiriqlar nazorati"
+          action={
+            <button 
+              onClick={onOpenModal}
+              className="flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-white shadow-md hover:scale-[1.02] active:scale-95 transition-transform" 
+              style={{ background: C.ink }}
+            >
+              <Icon name="plus" size={14} color="#fff" />
+              <span style={{ fontSize: 12.5, fontWeight: 600 }}>Yangi topshiriq</span>
+            </button>
+          }
+        >
+          <div className="px-6 flex gap-2 pb-4 flex-wrap">
+            {filters.map(f => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className="rounded-full px-3 py-1.5 transition-colors text-[12px] font-semibold"
+                style={{
+                  background: filter === f ? C.ink : C.paper,
+                  color: filter === f ? "#fff" : C.muted,
+                  border: `1px solid ${filter === f ? C.ink : C.border}`,
+                }}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+          <div className="px-2 pb-4">
+            {filtered.map((t, i) => {
+              const s = statusStyle[t.status] || { bg: "#eee", fg: "#333" };
+              return (
+                <div key={i} className="flex items-center gap-4 px-4 py-3.5 mx-2 rounded-xl hover:bg-slate-50 transition-colors" style={{ borderBottom: i !== filtered.length - 1 ? `1px solid ${C.border}` : "none" }}>
+                  <button 
+                    onClick={() => onToggleStatus(t.id)}
+                    className="rounded-full w-5 h-5 flex items-center justify-center border-2 transition-colors"
+                    style={{ borderColor: t.status === "Bajarildi" ? "#3F7D3A" : C.muted, background: t.status === "Bajarildi" ? "#E3EFE1" : "transparent" }}
+                  >
+                    {t.status === "Bajarildi" && <Icon name="check" size={12} color="#3F7D3A" />}
+                  </button>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13.5, color: C.text, fontWeight: 500, textDecoration: t.status === "Bajarildi" ? "line-through" : "none", opacity: t.status === "Bajarildi" ? 0.6 : 1 }}>{t.title}</div>
+                    <div style={{ fontSize: 11.5, color: C.muted, marginTop: 3 }}>{t.dept} · <span className="font-semibold text-slate-700">{t.assignee}</span></div>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-slate-500" style={{ fontSize: 12 }}>
+                    <Icon name="clock" size={13} /> {t.due}
+                  </div>
+                  <Badge text={t.status} bg={s.bg} fg={s.fg} />
+                </div>
+              );
+            })}
+            {filtered.length === 0 && (
+              <div className="text-center py-10 text-slate-400 text-sm">Ushbu bo'limda hech qanday topshiriq topilmadi.</div>
+            )}
+          </div>
+        </SectionCard>
+      );
+    }
+
+    // Ogohlantirish va jarimalar
+    function WarningsView() {
+      return (
+        <SectionCard title="Intizom va Jarimalar jurnali">
+          <div className="px-6 pb-5 overflow-x-auto">
+            <table className="w-full text-left" style={{ borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                  {["Xodim", "Bo'lim", "Turi", "Sababi", "Summa", "Sana"].map(h => (
+                    <th key={h} className="pb-3 pt-1 text-slate-500 font-semibold uppercase text-[11px] tracking-wider">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {warnings.map((w, i) => (
+                  <tr key={i} style={{ borderBottom: `1px solid ${C.border}` }}>
+                    <td className="py-3.5 font-medium text-[13px] text-slate-800">{w.name}</td>
+                    <td className="py-3.5 text-[12.5px] text-slate-500">{w.dept}</td>
+                    <td className="py-3.5">
+                      <Badge text={w.type} bg={w.type === "Jarima" ? C.redSoft : C.amberSoft} fg={w.type === "Jarima" ? C.red : C.amber} />
+                    </td>
+                    <td className="py-3.5 text-[12.5px] text-slate-700">{w.reason}</td>
+                    <td className="py-3.5 text-[12.5px] text-slate-800 font-medium">{w.amount}</td>
+                    <td className="py-3.5 text-[12.5px] text-slate-500">{w.date}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </SectionCard>
+      );
+    }
+
+    // Prayskurant ko'rinishi
+    function PriceListView() {
+      return (
+        <SectionCard title="Xizmatlar narxi (Prayskurant)" action={<Badge text="So'nggi yangilanish: Bugun" bg={C.tealSoft} fg={C.teal} />}>
+          <div className="px-6 pb-5 overflow-x-auto">
+            <table className="w-full text-left" style={{ borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ borderBottom: `1px solid ${C.border}` }}>
+                  {["Xizmat nomi", "Narxi", "Versiya", "Sana", "Amal"].map(h => (
+                    <th key={h} className="pb-3 pt-1 text-slate-500 font-semibold uppercase text-[11px] tracking-wider">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {priceList.map((p, i) => (
+                  <tr key={i} style={{ borderBottom: `1px solid ${C.border}` }}>
+                    <td className="py-3.5 font-medium text-[13px] text-slate-800">{p.service}</td>
+                    <td className="py-3.5 text-[13px] text-slate-800 font-semibold">{p.price}</td>
+                    <td className="py-3.5"><Badge text={p.version} bg={C.goldSoft} fg={C.gold} /></td>
+                    <td className="py-3.5 text-[12.5px] text-slate-500">{p.updated}</td>
+                    <td className="py-3.5 text-[12px] font-semibold cursor-pointer" style={{ color: C.teal }}>Tahrirlash</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </SectionCard>
+      );
+    }
+
+    // Shifokorlar bazasi
+    function DoctorsView() {
+      return (
+        <SectionCard title="Shifokorlar jamoasi">
+          <div className="px-6 pb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            {doctors.map((d, i) => (
+              <div key={i} className="rounded-xl p-4 hover:shadow-sm transition-all" style={{ border: `1px solid ${C.border}`, background: C.paper }}>
+                <div className="rounded-full flex items-center justify-center mb-3 text-white text-lg font-semibold" style={{ width: 42, height: 42, background: C.teal }}>
+                  {d.name.split(" ")[1]?.[0] || "D"}
+                </div>
+                <div style={{ fontSize: 15, color: C.text, fontWeight: 600 }}>{d.name}</div>
+                <div style={{ fontSize: 12, color: C.gold, fontWeight: 600, marginTop: 2 }}>{d.spec}</div>
+                <div style={{ fontSize: 11.5, color: C.muted, marginTop: 4 }}>{d.exp}</div>
+              </div>
+            ))}
+          </div>
+        </SectionCard>
+      );
+    }
+
+    function PlaceholderView({ label }) {
+      return (
+        <SectionCard title={label}>
+          <div className="px-6 pb-16 pt-10 flex flex-col items-center text-center" style={{ color: C.muted }}>
+            <div className="rounded-full flex items-center justify-center mb-4" style={{ width: 48, height: 48, background: C.paper }}>
+              <Icon name="file-text" size={20} />
+            </div>
+            <div style={{ fontSize: 14, fontWeight: 500 }}>"{label}" moduli ayni damda loyihalashtirilmoqda.</div>
+            <div className="text-xs mt-1 text-slate-400">Tez orada ushbu sahifa to'liq funksional rejimda ishga tushadi.</div>
+          </div>
+        </SectionCard>
+      );
+    }
+
+    // Asosiy ilova (App)
+    function GoldMedAdminPanel() {
+      const [active, setActive] = useState("dashboard");
+      const [isModalOpen, setIsModalOpen] = useState(false);
+      
+      const [tasksList, setTasksList] = useState([
+        { id: 1, title: "Laboratoriya xonasidagi chiroqni almashtirish", dept: "Xo'jalik", assignee: "Nigora T.", due: "Bugun", status: "Jarayonda" },
+        { id: 2, title: "Filialdan 2 ta bir xil nomdagi xizmatni birlashtirish", dept: "Buxgalteriya", assignee: "Surayyo A.", due: "Ertaga", status: "Yangi" },
+        { id: 3, title: "Yangi shifokor profilini saytga joylash", dept: "SMM", assignee: "Mohigul R.", due: "Hafta oxiri", status: "Yangi" },
+        { id: 4, title: "Haftalik yig'ilish bayonnomasini tarqatish", dept: "Boshqaruv", assignee: "Xudoyor N.", due: "Dushanba", status: "Bajarildi" },
+        { id: 5, title: "Prays-kurant PDF versiyasini yangilash", dept: "Buxgalteriya", assignee: "Nigora T.", due: "Ertaga", status: "Kechikdi" },
+      ]);
+
+      const [activityLog, setActivityLog] = useState([
+        { who: "Nigora T.", what: "yangi topshiriq qo'shdi", when: "10 daqiqa oldin" },
+        { who: "Xasan M.", what: "ogohlantirish e'lon qildi", when: "1 soat oldin" },
+        { who: "Mohigul R.", what: "kontent yukladi", when: "3 soat oldin" },
+        { who: "Surayyo A.", what: "muhokamaga javob berdi", when: "kecha" },
+      ]);
+
+      const [weeklyChartData, setWeeklyChartData] = useState(weeklyData);
+
+      const handleToggleStatus = (taskId) => {
+        setTasksList(prev => prev.map(task => {
+          if (task.id === taskId) {
+            const isCompleted = task.status === "Bajarildi";
+            const nextStatus = isCompleted ? "Yangi" : "Bajarildi";
+            
+            if (!isCompleted) {
+              setActivityLog(prevLog => [
+                { who: "Tizim", what: `"${task.title}" vazifasini bajarilgan deb belgiladi`, when: "Hozirgina" },
+                ...prevLog
+              ]);
+              setWeeklyChartData(prevData => prevData.map(d => d.day === "Shan" ? { ...d, bajarildi: d.bajarildi + 1 } : d));
+            }
+
+            return { ...task, status: nextStatus };
+          }
+          return task;
+        }));
+      };
+
+      const handleSaveTask = (newTask) => {
+        const id = tasksList.length + 1;
+        const taskWithId = { id, ...newTask };
+        setTasksList([taskWithId, ...tasksList]);
+        
+        setActivityLog([
+          { who: newTask.assignee, what: `yangi topshiriq qabul qildi: "${newTask.title}"`, when: "Hozirgina" },
+          ...activityLog
+        ]);
+
+        setWeeklyChartData(prevData => prevData.map(d => {
+          if (d.day === "Shan") {
+            return { ...d, yangi: d.yangi + 1 };
+          }
+          return d;
+        }));
+      };
+
+      const activeTasksCount = tasksList.filter(t => t.status !== "Bajarildi").length;
+      const current = NAV.find(n => n.id === active);
+
+      const views = {
+        dashboard: <Dashboard tasksList={tasksList} weeklyChartData={weeklyChartData} activityLog={activityLog} />,
+        tasks: <TasksView tasksList={tasksList} onOpenModal={() => setIsModalOpen(true)} onToggleStatus={handleToggleStatus} />,
+        warnings: <WarningsView />,
+        pricelist: <PriceListView />,
+        doctors: <DoctorsView />,
+      };
+
+      return (
+        <div className="flex h-screen overflow-hidden" style={{ background: C.paper }}>
+          <Sidebar active={active} setActive={setActive} activeTasksCount={activeTasksCount} />
+          
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <TopBar
+              title={current.label}
+              subtitle={active === "dashboard" ? "Gold Med Clinic — real vaqtdagi ish holati, 14-iyul 2026" : undefined}
+            />
+            
+            <div className="flex-1 overflow-auto p-8">
+              <div className="flex items-center gap-1.5 mb-5 text-slate-500 text-xs">
+                <span>Boshqaruv</span>
+                <Icon name="chevron-right" size={11} />
+                <span className="font-semibold text-slate-800">{current.label}</span>
+              </div>
+              
+              {views[active] || <PlaceholderView label={current.label} />}
+            </div>
+          </div>
+
+          <TaskModal 
+            isOpen={isModalOpen} 
+            onClose={() => setIsModalOpen(false)} 
+            onSave={handleSaveTask} 
+          />
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<GoldMedAdminPanel />);
+  </script>
+</body>
+</html>
